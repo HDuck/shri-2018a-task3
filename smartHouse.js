@@ -50,13 +50,18 @@ let JsonInp = `{
           "value": 6.46
       },
       {
+          "from": 2,
+          "to": 7,
+          "value": 5.38
+      },
+      {
           "from": 21,
           "to": 23,
           "value": 5.38
       },
       {
           "from": 23,
-          "to": 7,
+          "to": 2,
           "value": 1.79
       }
   ],
@@ -161,7 +166,7 @@ function smartHouse(JsonDataIn) {
   }
 
   //Сортируем массивы по стоимости тарифов
-  ratesDArr.sort(function(a, b) {
+  ratesDArr.sort((a, b) => {
     if (a.value > b.value) {
       return 1;
     } else if (a.value < b.value) {
@@ -171,7 +176,7 @@ function smartHouse(JsonDataIn) {
     }    
   });
   
-  ratesNArr.sort(function(a, b) {
+  ratesNArr.sort((a, b) => {
     if (a.value > b.value) {
       return 1;
     } else if (a.value < b.value) {
@@ -181,7 +186,7 @@ function smartHouse(JsonDataIn) {
     }    
   });
   
-  ratesUArr.sort(function(a, b) {
+  ratesUArr.sort((a, b) => {
     if (a.value > b.value) {
       return 1;
     } else if (a.value < b.value) {
@@ -212,7 +217,7 @@ function smartHouse(JsonDataIn) {
   }
 
   //Сортируем массивы по мощности приборов
-  devDArr.sort(function(a, b) {
+  devDArr.sort((a, b) => {
     if (a.power * a.duration < b.power * b.duration) {
       return 1;
     } else if (a.power * a.duration > b.power * b.duration) {
@@ -222,7 +227,7 @@ function smartHouse(JsonDataIn) {
     }    
   });
   
-  devNArr.sort(function(a, b) {
+  devNArr.sort((a, b) => {
     if (a.power * a.duration < b.power * b.duration) {
       return 1;
     } else if (a.power * a.duration > b.power * b.duration) {
@@ -232,7 +237,7 @@ function smartHouse(JsonDataIn) {
     }    
   });
   
-  devUArr.sort(function(a, b) {
+  devUArr.sort((a, b) => {
     if (a.power * a.duration < b.power * b.duration) {
       return 1;
     } else if (a.power * a.duration > b.power * b.duration) {
@@ -268,7 +273,7 @@ function smartHouse(JsonDataIn) {
     let currRate;
     let timeAssigned = 0;
     let timePassed = 0;
-    let searchIdx = 1;
+    let searchIdx;
     
     console.log(item);
 
@@ -286,7 +291,7 @@ function smartHouse(JsonDataIn) {
       }
     });
     if (cells < devWorkH) {
-      console.log('Недостаточно свободного времени!');
+      console.log(`Устройство: ${item.name}; id: ${devItemId};\nНедостаточно свободного времени!\nТребуется: ${devWorkH}ч; Доступно: ${cells}ч`);
       timeAssigned = 25;
     }
     console.log(cells, freeCells);
@@ -327,7 +332,7 @@ function smartHouse(JsonDataIn) {
         let currRate = rates[ratesIdx];
         
         console.log(currRate, ratesIdx);
-        if (rates[ratesIdx + 1] && rates[ratesIdx + 1].to <= 21) {
+        if (rates[ratesIdx + 1]) {
           while (rates[ratesIdx + searchIdx] && currRate.to !== rates[ratesIdx + searchIdx].from) {
 
             searchIdx++;
@@ -339,7 +344,7 @@ function smartHouse(JsonDataIn) {
               break;
             }
           }
-        } else if (rates[ratesIdx - 1] && rates[ratesIdx - searchIdx].to >= 7) {
+        } else if (rates[ratesIdx - 1]) {
           console.log(rates[ratesIdx - searchIdx].to, currRate.to - item.duration + devWorkH);
           while (rates[ratesIdx - searchIdx] && rates[ratesIdx - searchIdx].to !== currRate.to - item.duration + devWorkH) {
 
@@ -387,6 +392,94 @@ function smartHouse(JsonDataIn) {
     }
   });
   
+  function searchEngineUN(rates, ratesIdx, searchDirection, endN) {
+    console.log('searchin engine..');   
+    let iterationsc = 0;
+    let searchIdx = 0;
+    let currRate = rates[ratesIdx];
+    console.log(currRate);
+
+    while (true) {
+
+      iterationsc++;
+      if (iterationsc > 1000) {
+        timeAssigned = 25;
+        console.log('Бесконечность!');
+      }
+      
+      if (endN) {
+        if (currRate.to === 7) {
+
+          //Ищем fromStart
+          while (true) {
+
+            iterationsc++;
+            if (iterationsc > 1000) {
+              timeAssigned = 25;
+              console.log('Бесконечность!');
+            }
+
+            searchIdx--;
+            console.log('fromStart--', searchIdx);
+            console.log('fromStart-- rates.from', rates[ratesIdx - searchIdx].from);
+
+            if (rates[ratesIdx + searchIdx].to === currRate.from) {
+
+              ratesIdx -= searchIdx;
+              console.log('fromStart-- complete', rates[ratesIdx]);
+
+              break;
+            }
+          }
+
+          break;
+        }
+      }
+
+      if (searchDirection) {
+
+        searchIdx++;
+        console.log('search++', searchIdx);
+        
+        if (rates[ratesIdx + searchIdx]) {
+          
+          console.log('search++ rates.from', rates[ratesIdx + searchIdx].from);
+          
+          if (rates[ratesIdx + searchIdx].from === currRate.to) {
+
+            ratesIdx += searchIdx;
+            console.log('search++ complete', rates[ratesIdx]);
+
+            break;
+          }
+        } else {
+          
+          console.log('Changing search direction..');
+          searchDirection = false;
+        }
+
+      } else if (!(searchDirection)) {
+
+        searchIdx--;
+        console.log('search--', searchIdx);
+        console.log('search-- rates.to', rates[ratesIdx + searchIdx].from);
+
+        if (rates[ratesIdx + searchIdx].from === currRate.to) {
+
+          ratesIdx += searchIdx;
+          console.log('search-- complete', rates[ratesIdx]);
+
+          break;
+        }
+      } else {
+        console.log('something went wrong!');
+      } 
+
+    }
+    return ratesIdx;
+  }
+  
+  
 //Раскидываем ночные приборы
   devNArr.forEach((item, idx) => {
     let devWorkH = item.duration;
@@ -396,20 +489,22 @@ function smartHouse(JsonDataIn) {
     let ratesIdx = 0;
     let timeAssigned = 0;
     let timePassed = 0;
+    let zeroPass = false;
+    let searchPlus = true;
 
     console.log(item);
 
     let freeCells = 0;
     let cells = 0;
     dPowArr.forEach((item, idx) => {
-      if (devItemPow <= maxPow - item && idx < 7 || idx >= 21) {
+      if (devItemPow <= maxPow - item && (idx < 7 || idx >= 21)) {
         freeCells++;
-      } else if (idx < 7 || idx >= 21) {
+      } else if (idx => 7 && idx < 21) {
+        cells += freeCells;
         freeCells = 0;
       }
-
-      if (freeCells > cells) {
-        cells = freeCells;
+      if (idx === 23) {
+        cells += freeCells;
       }
     });
     if (cells < devWorkH) {
@@ -423,18 +518,24 @@ function smartHouse(JsonDataIn) {
       iterationsc++;
       if (iterationsc > 1000) {
         timeAssigned = 25;
+        console.log('Бесконечность!');
       }
-
-      console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[ratesIdx]from+TA+TP', rates[ratesIdx].from + timeAssigned + timePassed);
-
+      
+      if (rates[ratesIdx]) {
+        console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[idx].from&to', rates[ratesIdx].from, rates[ratesIdx].to, 'rates[ratesIdx]from+TA+TP', rates[ratesIdx].from + timeAssigned + timePassed);       
+      }
+      
       if (devItemPow > maxPow) {
 
         console.log(`Устройство: ${item.name}; id: ${devItemId};\nПревышена разрешенная мощность: ${devItemPow} > ${maxPow}`);
         break;
 
-      } else if (rates[ratesIdx].from < rates[ratesIdx].to) {
-
+      } 
+      
+      if (rates[ratesIdx].from < rates[ratesIdx].to) {
+        
         if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow <= maxPow && rates[ratesIdx].from + timeAssigned + timePassed < rates[ratesIdx].to) {
+          
           console.log(timeAssigned, timePassed, rates[ratesIdx]);
 
           JsonDataOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devItemId);
@@ -445,72 +546,76 @@ function smartHouse(JsonDataIn) {
           timePassed++;
         } else if (rates[ratesIdx].from + timeAssigned + timePassed >= rates[ratesIdx].to) {
           
-          if (!(rates[++ratesIdx])) {
-            console.log('Ошибка!');
-            break;
-          } else {
-            console.log(ratesIdx, 'perehod');
+          ratesIdx = searchEngineUN(rates, ratesIdx, searchPlus, true);
+          devWorkH -= timeAssigned;
+          timeAssigned = 0;
+          timePassed = 0;
+        }
+      } else {
+        
+        if (rates[ratesIdx].from + timeAssigned + timePassed < 24) {
+          
+          if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow <= maxPow) {
+            
+            console.log(timeAssigned, timePassed, rates[ratesIdx]);
+
+            JsonDataOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devItemId);
+            dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devItemPow;
+            timeAssigned++;
+
+          } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow > maxPow) {
+            timePassed++;
+          } else if (rates[ratesIdx].from + timeAssigned + timePassed >= rates[ratesIdx].to) {
+            
+            ratesIdx = searchEngineUN(rates, ratesIdx, searchPlus, true);
             devWorkH -= timeAssigned;
             timeAssigned = 0;
             timePassed = 0;
           }
           
-
-        }
-
-      } else if (rates[ratesIdx].from > rates[ratesIdx].to) {
-
-        if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow <= maxPow) {
-          console.log(timeAssigned, timePassed, rates[ratesIdx]);
-
-          JsonDataOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devItemId);
-          dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devItemPow;
-          timeAssigned++;
-
-        } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow > maxPow) {
-          timePassed++;
-        } else if (rates[ratesIdx].from + timeAssigned + timePassed === 24 && rates[ratesIdx].from > rates[ratesIdx].to) {
-          console.log('eureka!', devWorkH, timeAssigned);
-          while(devWorkH > timeAssigned) {
-
-
-            iterationsc++;
-            if (iterationsc > 1000) {
-              timeAssigned = 25;
-            }
-            console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[ratesIdx]from+TA+TP', rates[ratesIdx].from + timeAssigned + timePassed);
-
-            if (dPowArr[rates[ratesIdx].from - 24 + timeAssigned + timePassed] + devItemPow <= maxPow && rates[ratesIdx].from - 24 + timeAssigned + timePassed < rates[ratesIdx].to) {
-              console.log(timeAssigned, timePassed, rates[ratesIdx]);
-
-              JsonDataOut.schedule[rates[ratesIdx].from - 24 + timeAssigned + timePassed].push(devItemId);
-              dPowArr[rates[ratesIdx].from - 24 + timeAssigned + timePassed] += devItemPow;
-              timeAssigned++;
-
-            } else if (dPowArr[rates[ratesIdx].from - 24 + timeAssigned + timePassed] + devItemPow > maxPow) {
-              timePassed++;
-            } else if (rates[ratesIdx].from + timeAssigned + timePassed > rates[ratesIdx].to) {
-
-              if (!(rates[++ratesIdx])) {
-                console.log('ошибка');
-                break;
-              } else {
-                console.log(ratesIdx, 'perehod');
-                devWorkH -= timeAssigned;
-                timeAssigned = 0;
-                timePassed = 0;
-                break;
-              }
-            }
+        } else {
+          
+          if (!(zeroPass)) {
+            devWorkH -= timeAssigned;
+            timeAssigned = 0;
+            timePassed = 0;
+            zeroPass = true;
           }
-        }
+          
+          console.log('perehod cherez Zero!');
+          
+          if (rates[ratesIdx]) {
+            console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[idx].from&to', rates[ratesIdx].from, rates[ratesIdx].to, 'TA+TP', timeAssigned + timePassed);       
+          }
+          
+          if (dPowArr[timeAssigned + timePassed] + devItemPow <= maxPow && timeAssigned + timePassed < rates[ratesIdx].to) {
+            
+            console.log(timeAssigned, timePassed, rates[ratesIdx]);
 
+            JsonDataOut.schedule[timeAssigned + timePassed].push(devItemId);
+            dPowArr[timeAssigned + timePassed] += devItemPow;
+            timeAssigned++;
+
+          } else if (dPowArr[timeAssigned + timePassed] + devItemPow > maxPow) {
+            timePassed++;
+          } else if (timeAssigned + timePassed >= rates[ratesIdx].to) {
+            
+            ratesIdx = searchEngineUN(rates, ratesIdx, searchPlus, true);
+            
+            devWorkH -= timeAssigned;
+            timeAssigned = 0;
+            timePassed = 0;
+          }
+          
+        }
+        
       }
+
     }
 
   });
  
-    //Раскидываем нейтральные приборы   
+  //Раскидываем нейтральные приборы   
   devUArr.forEach((item, idx) => {
     let devWorkH = item.duration;
     let devItemPow = item.power;
@@ -519,6 +624,8 @@ function smartHouse(JsonDataIn) {
     let ratesIdx = 0;
     let timeAssigned = 0;
     let timePassed = 0;
+    let zeroPass = false;
+    let searchPlus = true;
 
     console.log(item);
 
@@ -548,16 +655,21 @@ function smartHouse(JsonDataIn) {
         timeAssigned = 25;
       }
 
-      console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[ratesIdx]from+TA+TP', rates[ratesIdx].from + timeAssigned + timePassed);
-
+      if (rates[ratesIdx]) {
+        console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[idx].from&to', rates[ratesIdx].from, rates[ratesIdx].to, 'rates[ratesIdx]from+TA+TP', rates[ratesIdx].from + timeAssigned + timePassed);       
+      }
+      
       if (devItemPow > maxPow) {
 
         console.log(`Устройство: ${item.name}; id: ${devItemId};\nПревышена разрешенная мощность: ${devItemPow} > ${maxPow}`);
         break;
 
-      } else if (rates[ratesIdx].from < rates[ratesIdx].to) {
-
+      }
+      
+      if (rates[ratesIdx].from < rates[ratesIdx].to) {
+        
         if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow <= maxPow && rates[ratesIdx].from + timeAssigned + timePassed < rates[ratesIdx].to) {
+          
           console.log(timeAssigned, timePassed, rates[ratesIdx]);
 
           JsonDataOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devItemId);
@@ -567,64 +679,110 @@ function smartHouse(JsonDataIn) {
         } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow > maxPow) {
           timePassed++;
         } else if (rates[ratesIdx].from + timeAssigned + timePassed >= rates[ratesIdx].to) {
-          ratesIdx++;
-          console.log(ratesIdx, 'perehod');
-          if (!(rates[ratesIdx])) {
-            console.log('ошибка');
-            break;
+          
+          if (item.duration === 24) {
+            
+            if (searchPlus && rates[ratesIdx + 1]) {
+              ratesIdx++;
+              console.log(rates[ratesIdx], 'perehod+');
+            } else {
+              searchPlus = false;
+              ratesIdx--;
+              console.log(rates[ratesIdx], 'perehod-')
+            }
+          } else {
+            ratesIdx = searchEngineUN(rates, ratesIdx, searchPlus);
           }
+          
           devWorkH -= timeAssigned;
           timeAssigned = 0;
           timePassed = 0;
         }
+      } else {
+        
+        if (rates[ratesIdx].from + timeAssigned + timePassed < 24) {
+          
+          if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow <= maxPow) {
+            
+            console.log(timeAssigned, timePassed, rates[ratesIdx]);
 
-      } else if (rates[ratesIdx].from > rates[ratesIdx].to) {
+            JsonDataOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devItemId);
+            dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devItemPow;
+            timeAssigned++;
 
-        if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow <= maxPow) {
-          console.log(timeAssigned, timePassed, rates[ratesIdx]);
-
-          JsonDataOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devItemId);
-          dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devItemPow;
-          timeAssigned++;
-
-        } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow > maxPow) {
-          timePassed++;
-        } else if (rates[ratesIdx].from + timeAssigned + timePassed === 24 && rates[ratesIdx].from > rates[ratesIdx].to) {
-          console.log('eureka!', devWorkH, timeAssigned);
-          while(devWorkH > timeAssigned) {
-
-
-            iterationsc++;
-            if (iterationsc > 1000) {
-              timeAssigned = 25;
-            }
-            console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[ratesIdx]from+TA+TP', rates[ratesIdx].from + timeAssigned + timePassed);
-
-            if (dPowArr[rates[ratesIdx].from - 24 + timeAssigned + timePassed] + devItemPow <= maxPow && rates[ratesIdx].from - 24 + timeAssigned + timePassed < rates[ratesIdx].to) {
-              console.log(timeAssigned, timePassed, rates[ratesIdx]);
-
-              JsonDataOut.schedule[rates[ratesIdx].from - 24 + timeAssigned + timePassed].push(devItemId);
-              dPowArr[rates[ratesIdx].from - 24 + timeAssigned + timePassed] += devItemPow;
-              timeAssigned++;
-
-            } else if (dPowArr[rates[ratesIdx].from - 24 + timeAssigned + timePassed] + devItemPow > maxPow) {
-              timePassed++;
-            } else if (rates[ratesIdx].from + timeAssigned + timePassed > rates[ratesIdx].to) {
+          } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow > maxPow) {
+            timePassed++;
+          } else if (rates[ratesIdx].from + timeAssigned + timePassed >= rates[ratesIdx].to) {
+            
+          if (item.duration === 24) {
+            
+            if (searchPlus && rates[ratesIdx + 1]) {
               ratesIdx++;
-              console.log(ratesIdx, 'perehod');
-              if (!(rates[ratesIdx])) {
-                console.log('ошибка');
-                break;
-              }
-              devWorkH -= timeAssigned;
-              timeAssigned = 0;
-              timePassed = 0;
-              break;
+              console.log(rates[ratesIdx], 'perehod+');
+            } else {
+              searchPlus = false;
+              ratesIdx--;
+              console.log(rates[ratesIdx], 'perehod-')
             }
+          } else {
+            ratesIdx = searchEngineUN(rates, ratesIdx, searchPlus);
           }
-        }
+          
+            devWorkH -= timeAssigned;
+            timeAssigned = 0;
+            timePassed = 0;
+          }
+          
+        } else {
+          
+          if (!(zeroPass)) {
+            devWorkH -= timeAssigned;
+            timeAssigned = 0;
+            timePassed = 0;
+            zeroPass = true;
+          }
+          
+          console.log('perehod cherez Zero!');
+          
+          if (rates[ratesIdx]) {
+            console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[idx].from&to', rates[ratesIdx].from, rates[ratesIdx].to, 'TA+TP', timeAssigned + timePassed);       
+          }
+          
+          if (dPowArr[timeAssigned + timePassed] + devItemPow <= maxPow && timeAssigned + timePassed < rates[ratesIdx].to) {
+            
+            console.log(timeAssigned, timePassed, rates[ratesIdx]);
 
+            JsonDataOut.schedule[timeAssigned + timePassed].push(devItemId);
+            dPowArr[timeAssigned + timePassed] += devItemPow;
+            timeAssigned++;
+
+          } else if (dPowArr[timeAssigned + timePassed] + devItemPow > maxPow) {
+            timePassed++;
+          } else if (timeAssigned + timePassed >= rates[ratesIdx].to) {
+          
+            if (item.duration === 24) {
+
+              if (searchPlus && rates[ratesIdx + 1]) {
+                ratesIdx++;
+                console.log(rates[ratesIdx], 'perehod+');
+              } else {
+                searchPlus = false;
+                ratesIdx--;
+                console.log(rates[ratesIdx], 'perehod-')
+              }
+            } else {
+              ratesIdx = searchEngineUN(rates, ratesIdx, searchPlus);
+            }
+
+            devWorkH -= timeAssigned;
+            timeAssigned = 0;
+            timePassed = 0;
+          }
+          
+        }
+        
       }
+
     }
 
   });
@@ -637,5 +795,7 @@ function smartHouse(JsonDataIn) {
 window.onload = function() {
   console.log('window loaded!');
   
-  smartHouse(JsonInp);
+  var JsonOut = smartHouse(JsonInp);
+  
+  console.log(JsonOut);
 };
