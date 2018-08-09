@@ -1,71 +1,7 @@
-let JsonInp = `{
-  "devices": [
-      {
-          "id": "F972B82BA56A70CC579945773B6866FB",
-          "name": "Посудомоечная машина",
-          "power": 950,
-          "duration": 3,
-          "mode": "night"
-      },
-      {
-          "id": "C515D887EDBBE669B2FDAC62F571E9E9",
-          "name": "Духовка",
-          "power": 2000,
-          "duration": 2,
-          "mode": "day"
-      },
-      {
-          "id": "02DDD23A85DADDD71198305330CC386D",
-          "name": "Холодильник",
-          "power": 50,
-          "duration": 24
-      },
-      {
-          "id": "1E6276CC231716FE8EE8BC908486D41E",
-          "name": "Термостат",
-          "power": 50,
-          "duration": 24
-      },
-      {
-          "id": "7D9DC84AD110500D284B33C82FE6E85E",
-          "name": "Кондиционер",
-          "power": 850,
-          "duration": 1
-      }
-  ],
-  "rates": [
-      {
-          "from": 7,
-          "to": 10,
-          "value": 6.46
-      },
-      {
-          "from": 10,
-          "to": 17,
-          "value": 5.38
-      },
-      {
-          "from": 17,
-          "to": 21,
-          "value": 6.46
-      },
-      {
-          "from": 21,
-          "to": 23,
-          "value": 5.38
-      },
-      {
-          "from": 23,
-          "to": 7,
-          "value": 1.79
-      }
-  ],
-  "maxPower": 2100
-}`;
-
 function smartHouse(JsonDataIn) {
-    
-  let JsonDataOut = {
+  
+  //Создаем макет выходных данных
+  let JsonDummyOut = {
     
     schedule: {
       "0": [],
@@ -100,101 +36,86 @@ function smartHouse(JsonDataIn) {
     },
   };
   
+  //Преобразуем входной JSON в JS объект
   let inp = JSON.parse(JsonDataIn);
   
-  let rates = inp.rates;
-  let devices = inp.devices;
-  let maxPow = inp.maxPower;
+  let rates = inp.rates;      //Исходные тарифы
+  let devices = inp.devices;  //Исходные устройства
+  let maxPow = inp.maxPower;  //Исходный максимум мощности в час
   
-  let ratesDArr = [];
-  let ratesNArr = [];
-  let ratesUArr = rates;
-  
-  let iterationsb = 0;
+  let ratesDArr = [];         //Массив с дневными тарифами
+  let ratesNArr = [];         //Массив с ночными тарифами
+  let ratesUArr = rates;      //Массив с общими тарифами
 
+  //Перебираем все тарифы
+  for (let i = 0; i < rates.length; i++) {
 
-  let timeDay = 0;
-  let timeNight = 0;
+    let start = rates[i].from;
 
-  //Циклируем пока не будет полный день
-  while (timeDay < 24) {
+    //Ночь 0 с 7
+    if (start >= 0 && start < 7) {
 
-    //Заглушка от бесконечного цикла
-    iterationsb++;
-    if (iterationsb > 10) {
-      timeDay = 24;
+      ratesNArr.push(rates[i]);  //Заполняем массив ночных тарифов
     }
-    //Перебираем все тарифы
-    for (let i = 0; i < rates.length; i++) {
 
-      let start = rates[i].from;
+    //День с 7 до 21
+    if (start >= 7 && start < 21) {
 
-      //Ночь 0 с 7
-      if (start >= 0 && start < 7) {
+      ratesDArr.push(rates[i]);  //Заполняем массив дневных тарифов
+    }
 
-        let end = rates[i].to;
-        timeDay += end - start;
+    //Ночь с 21 до 23
+    if (start >= 21 && start < 24) {
 
-        ratesNArr.push(rates[i]);  //Заполняем массив ночных тарифов
-      }
-
-      //День с 7 до 21
-      if (start >= 7 && start < 21) {
-
-        let end = rates[i].to;
-        timeDay += end - start;
-
-        ratesDArr.push(rates[i]);  //Заполняем массив дневных тарифов
-      }
-
-      //Ночь с 21 до 23
-      if (start >= 21 && start < 24) {
-
-        let end = rates[i].to;
-
-        //Проверка, если конец на следующий день
-        end < start ? timeDay += 24 - start + end : timeDay += end - start;
-
-        ratesNArr.push(rates[i]);  //Заполняем массив ночных тарифов
-      }
+      ratesNArr.push(rates[i]);  //Заполняем массив ночных тарифов
     }
   }
 
   //Сортируем массивы по стоимости тарифов
   ratesDArr.sort((a, b) => {
-    if (a.value > b.value) {
+    
+    if (a.value > b.value)
       return 1;
-    } else if (a.value < b.value) {
+    
+    else if (a.value < b.value)
       return -1;
-    } else {
+    
+    else
       return 0;
-    }    
+
   });
   
   ratesNArr.sort((a, b) => {
-    if (a.value > b.value) {
+    
+    if (a.value > b.value)
       return 1;
-    } else if (a.value < b.value) {
+    
+    else if (a.value < b.value)
       return -1;
-    } else {
+    
+    else
       return 0;
-    }    
+    
   });
   
   ratesUArr.sort((a, b) => {
-    if (a.value > b.value) {
+    
+    if (a.value > b.value)
       return 1;
-    } else if (a.value < b.value) {
+    
+    else if (a.value < b.value)
       return -1;
-    } else {
+    
+    else
       return 0;
-    }    
+    
   });
   
-  console.log('Тарифы: ');
-  console.log('ratesDArr: ', ratesDArr);
-  console.log('ratesNArr: ', ratesNArr);
-  console.log('ratesUArr: ', ratesUArr);
+  //Показываем в консоли отсортированные тарифы
+//  console.log('Тарифы: ');
+//  console.log('ratesDArr: ', ratesDArr);
+//  console.log('ratesNArr: ', ratesNArr);
+//  console.log('ratesUArr: ', ratesUArr);
   
   //Разбиваем устройства по группам
   let devDArr = [];
@@ -205,677 +126,912 @@ function smartHouse(JsonDataIn) {
     
     if (devices[i].mode === 'day')
       devDArr.push(devices[i]);
+    
     else if (devices[i].mode === 'night')
       devNArr.push(devices[i]);
+    
     else
       devUArr.push(devices[i]);
+  
   }
 
-  //Сортируем массивы по мощности приборов
+  //Сортируем массивы по мощности и длительности работы устройств
   devDArr.sort((a, b) => {
-    if (a.power * a.duration < b.power * b.duration) {
+    
+    if (a.power * a.duration < b.power * b.duration)
       return 1;
-    } else if (a.power * a.duration > b.power * b.duration) {
+    
+    else if (a.power * a.duration > b.power * b.duration)
       return -1;
-    } else {
+    
+    else
       return 0;
-    }    
+    
   });
   
   devNArr.sort((a, b) => {
-    if (a.power * a.duration < b.power * b.duration) {
+    
+    if (a.power * a.duration < b.power * b.duration)
       return 1;
-    } else if (a.power * a.duration > b.power * b.duration) {
+    
+    else if (a.power * a.duration > b.power * b.duration)
       return -1;
-    } else {
+    
+    else
       return 0;
-    }    
+    
   });
   
   devUArr.sort((a, b) => {
-    if (a.power * a.duration < b.power * b.duration) {
+    
+    if (a.power * a.duration < b.power * b.duration)
       return 1;
-    } else if (a.power * a.duration > b.power * b.duration) {
+    
+    else if (a.power * a.duration > b.power * b.duration)
       return -1;
-    } else {
+    
+    else
       return 0;
-    }    
+    
   });
   
-  console.log('Устройства: ');
-  console.log('Day: ',devDArr);
-  console.log('Night: ',devNArr);
-  console.log('Undefined: ',devUArr);
-  
-  let dArrLen = devDArr.length;
-  let uArrLen = devUArr.length;
-  
+  //Показываем в консоли отсортированные устройства
+//  console.log('Устройства: ');
+//  console.log('Day: ',devDArr);
+//  console.log('Night: ',devNArr);
+//  console.log('Undefined: ',devUArr);
+
   //Создаем массив с используемой мощностью по часам
   let dPowArr = [];
-  for (let i = 0; i < Object.keys(JsonDataOut.schedule).length; i++) {
+  
+  //Создаем структуру, соответствующуй расписанию выходного макета и заполняем нулями
+  for (let i = 0; i < Object.keys(JsonDummyOut.schedule).length; i++) {
     dPowArr[i] = 0;
   }
   
-  let iterationsc = 0;
-  
-  function searchEngineUN(ratesArr, currRatesIdx, undBool) {
-    console.log('searchin engine..');   
-    let iterations = 0;
-    let searchIdx = 0;
-    let currRate = ratesArr[currRatesIdx];
-    currRatesIdx = 0;
-    let idxOne;
-    let idxTwo;
-    let valOne;
-    let valTwo;
-    let rateTo;
+  //Функция поиска
+  function searchEngine(ratesArr, currRatesIdx, undBool) {
     
-    console.log(currRate);
-
+    let searchIdx = 0;                      //Поисковой индекс
+    let currRate = ratesArr[currRatesIdx];  //Текущий тариф
+    let idxOne = null;                      //Первый найденный индекс
+    let idxTwo = null;                      //Второй найденный индекс
+    let valOne = null;                      //Значение первого найденного тарифа
+    let valTwo = null;                      //Значение второго найденного тарифа
+    let rateTo = null;                      //Искомые конец/начало дня
+    let iterations = 0;                     //Для защиты от зацикливания при непредвиденных ситуациях
+    
+    //console.log('Searching engine activated!'); 
+    //console.log(currRate);
+    
     while (true) {
 
+      //Заглушка от бесконечного цикла
       iterations++;
       if (iterations > 1000) {
-        console.log('Бесконечность!');
+        console.log('>>>Бесконечность!<<<');
         break;
       }
       
-      console.log(ratesArr.length, rates.length, undBool);
-     
+      //Выбираем метод поиска в зависимости от того, какой текущий тариф (приграничный к концу/началу дня/ночи)
       if (!(undBool) && (currRate.from === 7 || currRate.from === 21 || currRate.to === 7 || currRate.to === 21)) {
-
+        
+        //В начале дня/ночи
         if (currRate.from === 7 || currRate.from === 21) {
-          console.log('endPointS++');
-          console.log('endPointS++ rates.to', ratesArr[currRatesIdx + searchIdx].to);
+          
+          //console.log('endPointS++');
+          //console.log('endPointS++ rates.to', ratesArr[currRatesIdx + searchIdx].to);
 
-          if (currRate.from === 7) {
+          //Определяем конец дня/ночи
+          if (currRate.from === 7)
             rateTo = 21;
-          } else if (currRate.from === 21) {
+          
+          else if (currRate.from === 21)
             rateTo = 7;
+         
+          //Ищем тариф который соответствует концу дня/ночи
+          if (ratesArr[searchIdx].to === rateTo) {
+            
+            //console.log('endPointS++ complete', currRatesIdx);
+            
+            //Возвращаем индекс найденного тарифа
+            return searchIdx;
           }
-
-          console.log(rateTo);
-
-          if (ratesArr[currRatesIdx + searchIdx].to === rateTo) {
-
-            currRatesIdx += searchIdx;
-            console.log('endPointS++ complete', currRatesIdx);
-            return currRatesIdx;
-          }
-          searchIdx++;
-
+          
+          searchIdx++; //Повышаем поисковой индекс, пока нет совпадений
+        
+        //В конце дня/ночи
         } else if (currRate.to === 7 || currRate.to === 21) {
-          console.log('endPointS--');
-          console.log('endPointS-- rates.from', ratesArr[currRatesIdx + searchIdx].to);
+          
+          //console.log('endPointS--');
+          //console.log('endPointS-- rates.from', ratesArr[currRatesIdx + searchIdx].to);
 
-          if (currRate.to === 7) {
+          //Определяем начало дня/ночи
+          if (currRate.to === 7)
             rateTo = 21;
-          } else if (currRate.to === 21) {
+          
+          else if (currRate.to === 21)
             rateTo = 7;
+
+          //Ищем тариф, которые соответсвует началу дня/ночи
+          if (ratesArr[searchIdx].from === rateTo) {
+            
+            //console.log('endPointS-- complete', currRatesIdx);
+
+            //Возвращаем индекс найденного тарифа
+            return searchIdx;
           }
-
-          console.log(rateTo);
-
-          if (ratesArr[currRatesIdx + searchIdx].from === rateTo) {
-
-            currRatesIdx += searchIdx;
-            console.log('endPointS-- complete', currRatesIdx);
-            return currRatesIdx;
-          }
-          searchIdx++;
+          
+          searchIdx++; //Повышаем поисковой индекс, пока нет совпадений
         }
+      
+      //Случай если не пограничные условия
       } else {
  
-        console.log('search++', searchIdx);
-        console.log('search++ rates.from', ratesArr[currRatesIdx + searchIdx].from);
+        //console.log('search++', searchIdx);
+        //console.log('search++ rates.from', ratesArr[currRatesIdx + searchIdx].from);
 
-        if (ratesArr[currRatesIdx + searchIdx].from === currRate.to) {
+        //Ищем тариф, который начинается там, где закончился текущий тариф
+        if (ratesArr[searchIdx].from === currRate.to) {
+          
+          //Запоминаем индекс и значение мощности, найденного тарифа
+          idxOne = searchIdx;
+          valOne = ratesArr[searchIdx].value;
+          
+          //console.log('search++ complete', idxOne, valOne);
+          //console.log('initializing search++ deep');
+          
+          searchIdx = 0;  //Обнуляем индекс поиска
 
-          idxOne = currRatesIdx + searchIdx;
-          valOne = ratesArr[currRatesIdx + searchIdx].value;
-          console.log('search++ complete', idxOne, valOne);
-
-          console.log('initializing search++ deep');
-          searchIdx = 0;
-
+          //Инициализируем поиск другого соседнего тарифа
           while(true) {
-            console.log('search++ deep', searchIdx);
-
-            console.log('search++ deep rates.to', ratesArr[currRatesIdx + searchIdx].to);
-
-            if (ratesArr[currRatesIdx + searchIdx].to === currRate.from) {
-
-              idxTwo = currRatesIdx + searchIdx;
-              valTwo = ratesArr[currRatesIdx + searchIdx].value;
-              console.log('search++ deep complete', idxTwo, valTwo);
-              
+            
+            //Заглушка от бесконечного цикла
+            iterations++;
+            if (iterations > 1000) {
+              console.log('>>>Бесконечность!<<<');
               break;
             }
-            searchIdx++;
-          }
 
-          if (valOne > valTwo) {
-            console.log('2', ratesArr[idxTwo]);
-            return idxTwo;
-          } else if (valOne < valTwo) {
-            console.log('1', ratesArr[idxOne]);
-            return idxOne;
-          } else {
-            if (Math.random() > 0.5) {
-              console.log('random');
-              return idxOne;
-            } else {
-              console.log('random');
-              return idxTwo;
+            //console.log('search++ deep', searchIdx);
+            //console.log('search++ deep rates.to', ratesArr[currRatesIdx + searchIdx].to);
+
+            //Ищем тариф, который заканчивается там, где начался текущий тариф
+            if (ratesArr[searchIdx].to === currRate.from) {
+
+              //Запоминаем индекс и значение мощности, найденного тарифа
+              idxTwo = searchIdx;
+              valTwo = ratesArr[searchIdx].value;
+              
+              //console.log('search++ deep complete', idxTwo, valTwo);
+              
+              break;  //Прерываем текущий цикл
             }
+            
+            searchIdx++;  //Повышаем поисковой индекс, пока нет совпадений
           }
 
-          break;
+          //Сравниваем соседние тарифы и ищем более выгодный
+          if (valOne > valTwo)
+            return idxTwo;  //Возвращаем индекс тарифа, который "левее" текущего
+          
+          else if (valOne < valTwo)
+            return idxOne;  //Возвращаем индекс тарифа, который "правее" текущего
+          
+          else {
+            
+            //Добавляем псевдо-рандома, если тарифы одинаковые
+            if (Math.random() > 0.5)
+              return idxOne;
+            
+            else
+              return idxTwo;
+           
+          }
         }
-        searchIdx++;
+        
+        searchIdx++;  //Повышаем поисковой индекс, пока нет совпадений
       }      
     }
 
-      
-    return false;
+    return false;  //Возвращаем false при неудавшемся поиске
   }
   
-  function rateCalc(devItem, rate) {
+  //Функция расчета стоимости потребленной энергии
+  function rateCalc(devItem, ratesValue) {
     
-    let devId = devItem.id;
-    let devPow = devItem.power;
-    let rateVal = rate.value;
-    let result = 0;
-    console.log(devId);
-    console.log(rate);
-    console.log(Object.keys(JsonDataOut.consumedEnergy.devices));
+    let devId = devItem.id;       //Идентефикатор устройства
+    let devPow = devItem.power;   //Мощность устройства
+    let rateVal = ratesValue;     //Значение текущего тарифа
+    let result = false;           //Наличие устройства в списке для расчета потребляемой энергии
     
-    for (let key in JsonDataOut.consumedEnergy.devices) {
-      if (key === devId) {
-        result = 1;
-      }
+    //Проверяем наличие устройства в списке
+    for (let key in JsonDummyOut.consumedEnergy.devices) {
+      
+      if (key === devId)
+        result = true;
+
     }
     
-    if (result === 0) {
-      JsonDataOut.consumedEnergy.devices[devId] = 0;
-    }
+    //Добавляем устройство в список если отсутствует
+    if (!(result))
+      JsonDummyOut.consumedEnergy.devices[devId] = 0;
+
+    let energyUsed = (devPow / 1000) * rateVal;  //Расчитываем затраты по тарифу за прошедший час
     
-    let energyUsed = (devPow / 1000) * rateVal;
-    
-    JsonDataOut.consumedEnergy.devices[devId] += energyUsed;
-    JsonDataOut.consumedEnergy.value += energyUsed;
-    
+    JsonDummyOut.consumedEnergy.devices[devId] += energyUsed;  //Добавляем затраты к соответсвующему устройству
+    JsonDummyOut.consumedEnergy.value += energyUsed;           //Добавляем затраты в общий кошелек
   }
   
   //Раскидываем дневные приборы
   devDArr.forEach((item, idx) => {
-    let devId = item.id;
-    let devWorkH = item.duration;
-    let devItemPow = item.power;
-    let devItemId = item.id;
-    let rates = ratesDArr;
-    let ratesIdx = 0;
-    let timeAssigned = 0;
-    let timePassed = 0;
     
-    console.log(item);
+    let devId = item.id;            //Идентификатор текущего устройства
+    let devPow = item.power;        //Мощность текущего устройства
+    let devWorkH = item.duration;   //Длительность работы текущего устройства
+    let rates = ratesDArr;          //Массив с дневными тарифами
+    let ratesIdx = 0;               //Начальный индекс массива (самый дешевый тариф)
+    let timeAssigned = 0;           //Количество вписаных часов в расписание
+    let timePassed = 0;             //Количество пропущенных часов из-за заполненности расписания
+    let searchIterations = 0;       //Количество циклов поиска searchEngine
+    let searchPlus = true;          //Показатель направления грубого поиска при зацикливании searchEngine 
+    let iterations = 0;             //Для защиты от зацикливания при непредвиденных ситуациях
+    
+    //console.log(item);
 
-    let freeCells = 0;
-    let cells = 0;
+    let freeCells = 0;  //Свободные ячейки времени
+    let maxCells = 0;   //Максимально свободный неразрывный промежуток времени
+    
+    //Расчет максимально свободного промежутка времени
     dPowArr.forEach((item, idx) => {
-      if (devItemPow <= maxPow - item && idx >= 7 && idx < 21) {
-        freeCells++;
-      } else {
-        freeCells = 0;
-      }
-
-      if (freeCells > cells) {
-        cells = freeCells;
-      }
-    });
-    if (cells < devWorkH) {
-      console.log(`Устройство: ${item.name}; id: ${devItemId};\nНедостаточно свободного времени!\nТребуется: ${devWorkH}ч; Доступно: ${cells}ч`);
-      timeAssigned = 25;
-    }
-    console.log(cells, freeCells);
       
+      //Подсчитываем свободные ячейки времени
+      devPow <= maxPow - item && idx >= 7 && idx < 21 ? freeCells++ : freeCells = 0;
+
+      //Записываем если свободно больше текущего максимума
+      if (freeCells > maxCells)
+        maxCells = freeCells;
+     
+    });
+    
+    //Выводим в консоль сообщение о невозможности добавления данного устройства в расписание 
+    if (devPow > maxPow) {
+
+      console.log(`Устройство: ${item.name}; id: ${devId};\nПревышена разрешенная мощность: ${devPow} > ${maxPow}`);
+      timeAssigned = 25;  //Предотвращаем вход в цикл
+
+    } else if (maxCells < devWorkH) {
+      
+      console.log(`Устройство: ${item.name}; id: ${devId};\nНедостаточно свободного времени!\nТребуется: ${devWorkH}ч; Доступно: ${maxCells}ч`);
+      timeAssigned = 25;  //Предотвращаем вход в цикл
+    }
+
+    //Распределяем устройство по расписанию
     while(devWorkH > timeAssigned) {
 
-      iterationsc++;
-      if (iterationsc > 1000) {
-        timeAssigned = 25;
-      }
-      
-      if (rates[ratesIdx]) {
-        console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[idx].from', rates[ratesIdx].from, 'rates[ratesIdx]from+TA+TP', rates[ratesIdx].from + timeAssigned + timePassed);       
-      }
-      
-      if (devItemPow > maxPow) {
-
-        console.log(`Устройство: ${item.name}; id: ${devItemId};\nПревышена разрешенная мощность: ${devItemPow} > ${maxPow}`);
+      //Заглушка от бесконечного цикла
+      iterations++;
+      if (iterations > 1000) {
+        console.log(`Устройство: ${item.name}; id: ${devId};\nНепредвиденная ошибка! Бесконечность!`);
         break;
+      }
 
-      } 
+      //Отладочная информация
+      //if (rates[ratesIdx]) {
+      //  console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[idx].from&to', rates[ratesIdx].from, rates[ratesIdx].to, 'rates[ratesIdx]from+TA+TP', rates[ratesIdx].from + timeAssigned + timePassed);       
+      //}
 
-      if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow <= maxPow && rates[ratesIdx].from + timeAssigned + timePassed < rates[ratesIdx].to) {
+      //Проверка возможности добавления устройства в текущий час расписания при наличии
+      //достаточной нераспределенной мощности и не превышении границ времени текущего тарифа
+      if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devPow <= maxPow && rates[ratesIdx].from + timeAssigned + timePassed < rates[ratesIdx].to) {
 
-        console.log(timeAssigned, timePassed, rates[ratesIdx]);
+        //console.log(timeAssigned, timePassed, rates[ratesIdx]);
 
-        JsonDataOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devItemId);
-        dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devItemPow;
+        JsonDummyOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devId);  //Добавляем устройство в расписание на текущий час
+        dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devPow;                  //Добавляем мощность устройства на текущий час в массив мощностей
         
-        rateCalc(item, rates[ratesIdx]);
+        rateCalc(item, rates[ratesIdx].value);  //Рассчитываем затраты
+        timeAssigned++;                         //Повышаем кол-во вписаных часов для текущего устройства
+      
+      //Если в текущий час нет свободной мощности
+      } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devPow > maxPow) {
         
-        timeAssigned++;
-
-      } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow > maxPow) {
-        timePassed++;
+        timePassed++;  //Повышаем кол-во пропущенных часов
+      
+      //Если текущий час на границе двух тарифов
       } else if (rates[ratesIdx].from + timeAssigned + timePassed >= rates[ratesIdx].to) {
 
-        ratesIdx = searchEngineUN(rates, ratesIdx);
-        console.log(ratesIdx);
-        devWorkH -= timeAssigned;
-        timeAssigned = 0;
-        timePassed = 0;
-      }
-    }
-  });  
-  
-//Раскидываем ночные приборы
-  devNArr.forEach((item, idx) => {
-    let devWorkH = item.duration;
-    let devItemPow = item.power;
-    let devItemId = item.id;
-    let rates = ratesNArr;
-    let ratesIdx = 0;
-    let timeAssigned = 0;
-    let timePassed = 0;
-    let zeroPass = false;
-    let searchPlus = true;
-    let itemIterations = 24;
+        //Проверка на необходимость грубого поиска
+        if (searchIterations > 14) {
 
-    console.log(item);
-
-    let freeCells = 0;
-    let cells = 0;
-    dPowArr.forEach((item, idx) => {
-      if (devItemPow <= maxPow - item && (idx < 7 || idx >= 21)) {
-        freeCells++;
-      } else if (idx => 7 && idx < 21) {
-        cells += freeCells;
-        freeCells = 0;
-      }
-      if (idx === 23) {
-        cells += freeCells;
-      }
-    });
-    if (cells < devWorkH) {
-      console.log(`Устройство: ${item.name}; id: ${devItemId};\nНедостаточно свободного времени!\nТребуется: ${devWorkH}ч; Доступно: ${cells}ч`);
-      timeAssigned = 25;
-    }
-    console.log(cells, freeCells);
-
-    while(devWorkH > timeAssigned) {
-
-      iterationsc++;
-      if (iterationsc > 1000) {
-        timeAssigned = 25;
-        console.log('Бесконечность!');
-      }
-      
-      if (rates[ratesIdx]) {
-        console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[idx].from&to', rates[ratesIdx].from, rates[ratesIdx].to, 'rates[ratesIdx]from+TA+TP', rates[ratesIdx].from + timeAssigned + timePassed);       
-      }
-      
-      if (devItemPow > maxPow) {
-
-        console.log(`Устройство: ${item.name}; id: ${devItemId};\nПревышена разрешенная мощность: ${devItemPow} > ${maxPow}`);
-        break;
-
-      } 
-      
-      if (rates[ratesIdx].from < rates[ratesIdx].to) {
-        
-        if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow <= maxPow && rates[ratesIdx].from + timeAssigned + timePassed < rates[ratesIdx].to) {
-          
-          console.log(timeAssigned, timePassed, rates[ratesIdx]);
-
-          JsonDataOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devItemId);
-          dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devItemPow;
-          
-          rateCalc(item, rates[ratesIdx]);
-          
-          timeAssigned++;
-
-        } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow > maxPow) {
-          timePassed++;
-        } else if (rates[ratesIdx].from + timeAssigned + timePassed >= rates[ratesIdx].to) {
-          
-            if (item.duration === 24 || itemIterations > 23) {
-
-              if (searchPlus && rates[ratesIdx + 1]) {
-                ratesIdx++;
-                console.log(rates[ratesIdx], 'perehod+');
-              } else {
-                searchPlus = false;
-                ratesIdx--;
-                console.log(rates[ratesIdx], 'perehod-')
-              }
-            } else {
-              ratesIdx = searchEngineUN(rates, ratesIdx);
-              itemIterations++;
-            }
-          devWorkH -= timeAssigned;
-          timeAssigned = 0;
-          timePassed = 0;
-        }
-      } else {
-        
-        if (rates[ratesIdx].from + timeAssigned + timePassed < 24) {
-          
-          if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow <= maxPow) {
+          //Проверка на наличие следующего тарифа в массиве дневных тарифов
+          if (searchPlus && rates[ratesIdx + 1]) {
             
-            console.log(timeAssigned, timePassed, rates[ratesIdx]);
-
-            JsonDataOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devItemId);
-            dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devItemPow;
+            ratesIdx++;  //Повышаем индекс массива
             
-            rateCalc(item, rates[ratesIdx]);
+          } else {
             
-            timeAssigned++;
-
-          } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow > maxPow) {
-            timePassed++;
-          } else if (rates[ratesIdx].from + timeAssigned + timePassed >= rates[ratesIdx].to) {
-            
-            if (item.duration === 24 || itemIterations > 23) {
-
-              if (searchPlus && rates[ratesIdx + 1]) {
-                ratesIdx++;
-                console.log(rates[ratesIdx], 'perehod+');
-              } else {
-                searchPlus = false;
-                ratesIdx--;
-                console.log(rates[ratesIdx], 'perehod-')
-              }
-            } else {
-              ratesIdx = searchEngineUN(rates, ratesIdx);
-              itemIterations++;
-            }
-            devWorkH -= timeAssigned;
-            timeAssigned = 0;
-            timePassed = 0;
+            searchPlus = false;  //Отключаем возможность повышать индекс массива
+            ratesIdx--;          //Понижаем индекс массива
           }
           
         } else {
           
-          if (!(zeroPass)) {
-            devWorkH -= timeAssigned;
-            timeAssigned = 0;
-            timePassed = 0;
-            zeroPass = true;
-          }
-          
-          console.log('perehod cherez Zero!');
-          
-          if (rates[ratesIdx]) {
-            console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[idx].from&to', rates[ratesIdx].from, rates[ratesIdx].to, 'TA+TP', timeAssigned + timePassed);       
-          }
-          
-          if (dPowArr[timeAssigned + timePassed] + devItemPow <= maxPow && timeAssigned + timePassed < rates[ratesIdx].to) {
-            
-            console.log(timeAssigned, timePassed, rates[ratesIdx]);
-
-            JsonDataOut.schedule[timeAssigned + timePassed].push(devItemId);
-            dPowArr[timeAssigned + timePassed] += devItemPow;
-            
-            rateCalc(item, rates[ratesIdx]);
-            
-            timeAssigned++;
-
-          } else if (dPowArr[timeAssigned + timePassed] + devItemPow > maxPow) {
-            timePassed++;
-          } else if (timeAssigned + timePassed >= rates[ratesIdx].to) {
-            
-            if (item.duration === 24 || itemIterations > 23) {
-
-              if (searchPlus && rates[ratesIdx + 1]) {
-                ratesIdx++;
-                console.log(rates[ratesIdx], 'perehod+');
-              } else {
-                searchPlus = false;
-                ratesIdx--;
-                console.log(rates[ratesIdx], 'perehod-')
-              }
-            } else {
-              ratesIdx = searchEngineUN(rates, ratesIdx);
-              itemIterations++;
-            }
-            
-            devWorkH -= timeAssigned;
-            timeAssigned = 0;
-            timePassed = 0;
-          }
+          ratesIdx = searchEngine(rates, ratesIdx);  //Инициализируем поиск тарифа
+          searchIterations++;                        //Повышаем количество циклов поиска
           
         }
         
+        devWorkH -= timeAssigned;  //Понижаем кол-во нераспределенных часов работы устройства
+        timeAssigned = 0;          //Обнуляем кол-во распределенных часов работы устройства
+        timePassed = 0;            //Обнуляем кол-во пропущенных часов
       }
+    }
+  });
 
+  //Раскидываем ночные приборы
+  devNArr.forEach((item, idx) => {
+    
+    let devId = item.id;            //Идентификатор текущего устройства
+    let devPow = item.power;        //Мощность текущего устройства
+    let devWorkH = item.duration;   //Длительность работы текущего устройства
+    let rates = ratesNArr;          //Массив с ночными тарифами
+    let ratesIdx = 0;               //Начальный индекс массива (самый дешевый тариф)
+    let timeAssigned = 0;           //Количество вписаных часов в расписание
+    let timePassed = 0;             //Количество пропущенных часов из-за заполненности расписания
+    let zeroPass = false;           //Показатель перехода через 0
+    let searchIterations = 0;       //Количество циклов поиска searchEngine
+    let searchPlus = true;          //Показатель направления грубого поиска при зацикливании searchEngine 
+    let iterations = 0;             //Для защиты от зацикливания при непредвиденных ситуациях
+
+    //console.log(item);
+
+    let freeCells = 0;    //Свободные ячейки времени
+    let maxCells = 0;     //Максимально свободный неразрывный промежуток времени
+    let addCells = 0;     //Свободные ячейки от 0 до первой несвободной ячейку
+    let fromZero = true;  //Индикатор попадания на первую несвободную ячейку
+    
+    //Расчет максимально свободного промежутка времени
+    dPowArr.forEach((item, idx) => {
+      
+      //Подсчитываем свободные ячейки времени
+      devPow <= maxPow - item && (idx < 7 || idx >= 21) ? freeCells++ : freeCells = 0;
+      
+      //Подсчитываем свободные ячейки от 0 до первой несвободной или до 7
+      fromZero && devPow <= maxPow - item && idx < 7 ? addCells++ : fromZero = false;
+      
+      //Добавляем свободные ячейки от нуля к ячейкам в конце если на 23 часа существуют свободные ячейки
+      if (idx === 23 && freeCells !== 0)
+        freeCells += addCells;
+      
+      //Записываем если свободно больше текущего максимума
+      if (maxCells < freeCells)
+        maxCells = freeCells;
+  
+    });
+    
+    //Выводим в консоль сообщение о невозможности добавления данного устройства в расписание 
+    if (devPow > maxPow) {
+
+      console.log(`Устройство: ${item.name}; id: ${devId};\nПревышена разрешенная мощность: ${devPow} > ${maxPow}`);
+      timeAssigned = 25;  //Предотвращаем вход в цикл
+
+    } else if (maxCells < devWorkH) {
+      
+      console.log(`Устройство: ${item.name}; id: ${devId};\nНедостаточно свободного времени!\nТребуется: ${devWorkH}ч; Доступно: ${maxCells}ч`);
+      timeAssigned = 25;  //Предотвращаем вход в цикл
     }
 
+    //Распределяем устройство по расписанию
+    while(devWorkH > timeAssigned) {
+
+      //Заглушка от бесконечного цикла
+      iterations++;
+      if (iterations > 1000) {
+        console.log(`Устройство: ${item.name}; id: ${devId};\nНепредвиденная ошибка! Бесконечность!`);
+        break;
+      }
+      
+      //Отладочная информация
+      //if (rates[ratesIdx]) {
+      //  console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[idx].from&to', rates[ratesIdx].from, rates[ratesIdx].to, 'rates[ratesIdx]from+TA+TP', rates[ratesIdx].from + timeAssigned + timePassed);       
+      //}
+      
+      //Проверка на переходный с суток на сутки тариф
+      if (rates[ratesIdx].from < rates[ratesIdx].to) {
+        
+        //Проверка возможности добавления устройства в текущий час расписания при наличии
+        //достаточной нераспределенной мощности и не превышении границ времени текущего тарифа
+        if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devPow <= maxPow && rates[ratesIdx].from + timeAssigned + timePassed < rates[ratesIdx].to) {
+
+          //console.log(timeAssigned, timePassed, rates[ratesIdx]);
+
+          JsonDummyOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devId);  //Добавляем устройство в расписание на текущий час
+          dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devPow;                  //Добавляем мощность устройства на текущий час в массив мощностей
+
+          rateCalc(item, rates[ratesIdx].value);  //Рассчитываем затраты
+          timeAssigned++;                         //Повышаем кол-во вписаных часов для текущего устройства
+
+        //Если в текущий час нет свободной мощности
+        } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devPow > maxPow) {
+
+          timePassed++;  //Повышаем кол-во пропущенных часов
+
+        //Если текущий час на границе двух тарифов
+        } else if (rates[ratesIdx].from + timeAssigned + timePassed >= rates[ratesIdx].to) {
+
+          //Проверка на необходимость грубого поиска
+          if (searchIterations > 14) {
+
+            //Проверка на наличие следующего тарифа в массиве дневных тарифов
+            if (searchPlus && rates[ratesIdx + 1]) {
+
+              ratesIdx++;  //Повышаем индекс массива
+
+            } else {
+
+              searchPlus = false;  //Отключаем возможность повышать индекс массива
+              ratesIdx--;          //Понижаем индекс массива
+            }
+
+          } else {
+
+            ratesIdx = searchEngine(rates, ratesIdx);  //Инициализируем поиск тарифа
+            searchIterations++;                        //Повышаем количество циклов поиска
+
+          }
+
+          devWorkH -= timeAssigned;  //Понижаем кол-во нераспределенных часов работы устройства
+          timeAssigned = 0;          //Обнуляем кол-во распределенных часов работы устройства
+          timePassed = 0;            //Обнуляем кол-во пропущенных часов
+        }
+        
+      } else if (rates[ratesIdx].from > rates[ratesIdx].to) {
+        
+        //Проверка на 24 часа
+        if (rates[ratesIdx].from + timeAssigned + timePassed < 24) {
+          
+          //Проверка возможности добавления устройства в текущий час расписания при наличии
+          //достаточной нераспределенной мощности и перехода через 0
+          if (!(zeroPass) && dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devPow <= maxPow) {
+
+            //console.log(timeAssigned, timePassed, rates[ratesIdx]);
+
+            JsonDummyOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devId);  //Добавляем устройство в расписание на текущий час
+            dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devPow;                  //Добавляем мощность устройства на текущий час в массив мощностей
+
+            rateCalc(item, rates[ratesIdx].value);  //Рассчитываем затраты
+            timeAssigned++;                         //Повышаем кол-во вписаных часов для текущего устройства
+
+          //Если в текущий час нет свободной мощности
+          } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devPow > maxPow) {
+
+            timePassed++;  //Повышаем кол-во пропущенных часов
+
+          //Если текущий час на границе двух тарифов
+          } else if (rates[ratesIdx].from + timeAssigned + timePassed >= rates[ratesIdx].to) {
+
+            //Проверка на необходимость грубого поиска
+            if (searchIterations > 14) {
+
+              //Проверка на наличие следующего тарифа в массиве дневных тарифов
+              if (searchPlus && rates[ratesIdx + 1]) {
+
+                ratesIdx++;  //Повышаем индекс массива
+
+              } else {
+
+                searchPlus = false;  //Отключаем возможность повышать индекс массива
+                ratesIdx--;          //Понижаем индекс массива
+              }
+
+            } else {
+
+              ratesIdx = searchEngine(rates, ratesIdx);  //Инициализируем поиск тарифа
+              searchIterations++;                        //Повышаем количество циклов поиска
+
+            }
+
+            devWorkH -= timeAssigned;  //Понижаем кол-во нераспределенных часов работы устройства
+            timeAssigned = 0;          //Обнуляем кол-во распределенных часов работы устройства
+            timePassed = 0;            //Обнуляем кол-во пропущенных часов
+          }
+          
+        } else {
+          
+          //Проверка на переход через 0
+          if (!(zeroPass)) {
+            
+            devWorkH -= timeAssigned;  //Понижаем кол-во нераспределенных часов работы устройства
+            timeAssigned = 0;          //Обнуляем кол-во распределенных часов работы устройства
+            timePassed = 0;            //Обнуляем кол-во пропущенных часов
+            zeroPass = true;           //Изменяем показатель перехода
+            
+          }
+          
+          //Отладочная информация
+          //console.log('Zdes bil Zero!', zeroPass);
+          //if (rates[ratesIdx]) {
+          //  console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[idx].from&to', rates[ratesIdx].from, rates[ratesIdx].to, 'TA+TP', timeAssigned + timePassed);       
+          //}
+          
+          //Проверка возможности добавления устройства в текущий час расписания при наличии
+          //достаточной нераспределенной мощности и не превышении границ времени текущего тарифа
+          if (dPowArr[timeAssigned + timePassed] + devPow <= maxPow && timeAssigned + timePassed < rates[ratesIdx].to) {
+
+            //console.log(timeAssigned, timePassed, rates[ratesIdx]);
+
+            JsonDummyOut.schedule[timeAssigned + timePassed].push(devId);  //Добавляем устройство в расписание на текущий час
+            dPowArr[timeAssigned + timePassed] += devPow;                  //Добавляем мощность устройства на текущий час в массив мощностей
+
+            rateCalc(item, rates[ratesIdx].value);  //Рассчитываем затраты
+            timeAssigned++;                         //Повышаем кол-во вписаных часов для текущего устройства
+
+          //Если в текущий час нет свободной мощности
+          } else if (dPowArr[timeAssigned + timePassed] + devPow > maxPow) {
+
+            timePassed++;  //Повышаем кол-во пропущенных часов
+
+          //Если текущий час на границе двух тарифов
+          } else if (timeAssigned + timePassed >= rates[ratesIdx].to) {
+
+            //Проверка на необходимость грубого поиска
+            if (searchIterations > 14) {
+
+              //Проверка на наличие следующего тарифа в массиве дневных тарифов
+              if (searchPlus && rates[ratesIdx + 1]) {
+
+                ratesIdx++;  //Повышаем индекс массива
+
+              } else {
+
+                searchPlus = false;  //Отключаем возможность повышать индекс массива
+                ratesIdx--;          //Понижаем индекс массива
+              }
+
+            } else {
+
+              ratesIdx = searchEngine(rates, ratesIdx);  //Инициализируем поиск тарифа
+              searchIterations++;                        //Повышаем количество циклов поиска
+
+            }
+
+            devWorkH -= timeAssigned;  //Понижаем кол-во нераспределенных часов работы устройства
+            timeAssigned = 0;          //Обнуляем кол-во распределенных часов работы устройства
+            timePassed = 0;            //Обнуляем кол-во пропущенных часов
+          }
+        }
+      }
+    }
   });
  
   //Раскидываем нейтральные приборы   
   devUArr.forEach((item, idx) => {
-    let devWorkH = item.duration;
-    let devItemPow = item.power;
-    let devItemId = item.id;
-    let rates = ratesUArr;
-    let ratesIdx = 0;
-    let timeAssigned = 0;
-    let timePassed = 0;
-    let zeroPass = false;
-    let searchPlus = true;
-    let itemIterations = 24;
+ 
+    let devId = item.id;            //Идентификатор текущего устройства
+    let devPow = item.power;        //Мощность текущего устройства
+    let devWorkH = item.duration;   //Длительность работы текущего устройства
+    let rates = ratesUArr;          //Массив с общими тарифами
+    let ratesIdx = 0;               //Начальный индекс массива (самый дешевый тариф)
+    let timeAssigned = 0;           //Количество вписаных часов в расписание
+    let timePassed = 0;             //Количество пропущенных часов из-за заполненности расписания
+    let zeroPass = false;           //Показатель перехода через 0
+    let searchIterations = 0;       //Количество циклов поиска searchEngine
+    let searchPlus = true;          //Показатель направления грубого поиска при зацикливании searchEngine 
+    let iterations = 0;             //Для защиты от зацикливания при непредвиденных ситуациях
 
-    console.log(item);
+    //console.log(item);
 
-    let freeCells = 0;
-    let cells = 0;
-    dPowArr.forEach((item, idx) => {
-      if (devItemPow <= maxPow - item) {
-        freeCells++;
-      } else {
-        cells += freeCells;
-        freeCells = 0;
-      }
-
-      if (idx === 23) {
-        cells += freeCells;
-      }
-    });
-    if (cells < devWorkH) {
-      console.log(`Устройство: ${item.name}; id: ${devItemId};\nНедостаточно свободного времени!\nТребуется: ${devWorkH}ч; Доступно: ${cells}ч`);
-      timeAssigned = 25;
-    }
-    console.log(cells, freeCells);
+    let freeCells = 0;    //Свободные ячейки времени
+    let maxCells = 0;     //Максимально свободный неразрывный промежуток времени
+    let addCells = 0;     //Свободные ячейки от 0 до первой несвободной ячейку
+    let fromZero = true;  //Индикатор попадания на первую несвободную ячейку
     
+    //Расчет максимально свободного промежутка времени
+    dPowArr.forEach((item, idx) => {
+      
+      //Подсчитываем свободные ячейки времени
+      devPow <= maxPow - item ? freeCells++ : freeCells = 0;
+      
+      //Подсчитываем свободные ячейки от 0 до первой несвободной
+      fromZero && devPow <= maxPow - item ? addCells++ : fromZero = false;
+      
+      //Добавляем свободные ячейки от 0 к ячейкам в конце если на 23 часа существуют свободные ячейки и их кол-во не 24
+      if (idx === 23 && freeCells !== 0 && freeCells !== 24)
+        freeCells += addCells;
+      
+      //Записываем если свободно больше текущего максимума
+      if (maxCells < freeCells)
+        maxCells = freeCells;
+  
+    });
+    
+    //Выводим в консоль сообщение о невозможности добавления данного устройства в расписание 
+    if (devPow > maxPow) {
+
+      console.log(`Устройство: ${item.name}; id: ${devId};\nПревышена разрешенная мощность: ${devPow} > ${maxPow}`);
+      timeAssigned = 25;  //Предотвращаем вход в цикл
+
+    } else if (maxCells < devWorkH) {
+      
+      console.log(`Устройство: ${item.name}; id: ${devId};\nНедостаточно свободного времени!\nТребуется: ${devWorkH}ч; Доступно: ${maxCells}ч`);
+      timeAssigned = 25;  //Предотвращаем вход в цикл
+    }
+
+    //Распределяем устройство по расписанию
     while(devWorkH > timeAssigned) {
 
-      iterationsc++;
-      if (iterationsc > 1000) {
-        timeAssigned = 25;
-      }
-
-      if (rates[ratesIdx]) {
-        console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[idx].from&to', rates[ratesIdx].from, rates[ratesIdx].to, 'rates[ratesIdx]from+TA+TP', rates[ratesIdx].from + timeAssigned + timePassed);       
-      }
-      
-      if (devItemPow > maxPow) {
-
-        console.log(`Устройство: ${item.name}; id: ${devItemId};\nПревышена разрешенная мощность: ${devItemPow} > ${maxPow}`);
+      //Заглушка от бесконечного цикла
+      iterations++;
+      if (iterations > 1000) {
+        console.log(`Устройство: ${item.name}; id: ${devId};\nНепредвиденная ошибка! Бесконечность!`);
         break;
-
       }
       
+      //Отладочная информация
+      //if (rates[ratesIdx]) {
+      //  console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[idx].from&to', rates[ratesIdx].from, rates[ratesIdx].to, 'rates[ratesIdx]from+TA+TP', rates[ratesIdx].from + timeAssigned + timePassed);       
+      //}
+      
+      //Проверка на переходный с суток на сутки тариф
       if (rates[ratesIdx].from < rates[ratesIdx].to) {
         
-        if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow <= maxPow && rates[ratesIdx].from + timeAssigned + timePassed < rates[ratesIdx].to) {
-          
-          console.log(timeAssigned, timePassed, rates[ratesIdx]);
+        //Проверка возможности добавления устройства в текущий час расписания при наличии
+        //достаточной нераспределенной мощности и не превышении границ времени текущего тарифа
+        if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devPow <= maxPow && rates[ratesIdx].from + timeAssigned + timePassed < rates[ratesIdx].to) {
 
-          JsonDataOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devItemId);
-          dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devItemPow;
-          
-          rateCalc(item, rates[ratesIdx]);
-          
-          timeAssigned++;
+          //console.log(timeAssigned, timePassed, rates[ratesIdx]);
 
-        } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow > maxPow) {
-          timePassed++;
+          JsonDummyOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devId);  //Добавляем устройство в расписание на текущий час
+          dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devPow;                  //Добавляем мощность устройства на текущий час в массив мощностей
+
+          rateCalc(item, rates[ratesIdx].value);  //Рассчитываем затраты
+          timeAssigned++;                         //Повышаем кол-во вписаных часов для текущего устройства
+
+        //Если в текущий час нет свободной мощности
+        } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devPow > maxPow) {
+
+          timePassed++;  //Повышаем кол-во пропущенных часов
+
+        //Если текущий час на границе двух тарифов
         } else if (rates[ratesIdx].from + timeAssigned + timePassed >= rates[ratesIdx].to) {
-          
-          if (item.duration === 24 || itemIterations > 23) {
-            
+
+          //Проверка на необходимость грубого поиска
+          if (item.duration === 24 || searchIterations > 24) {
+
+            //Проверка на наличие следующего тарифа в массиве дневных тарифов
             if (searchPlus && rates[ratesIdx + 1]) {
-              ratesIdx++;
-              console.log(rates[ratesIdx], 'perehod+');
+
+              ratesIdx++;  //Повышаем индекс массива
+
             } else {
-              searchPlus = false;
-              ratesIdx--;
-              console.log(rates[ratesIdx], 'perehod-')
+
+              searchPlus = false;  //Отключаем возможность повышать индекс массива
+              ratesIdx--;          //Понижаем индекс массива
             }
+
           } else {
-            ratesIdx = searchEngineUN(rates, ratesIdx, true);
-            itemIterations++;
+
+            ratesIdx = searchEngine(rates, ratesIdx, true);  //Инициализируем поиск тарифа
+            searchIterations++;                              //Повышаем количество циклов поиска
+
           }
-          
-          devWorkH -= timeAssigned;
-          timeAssigned = 0;
-          timePassed = 0;
+
+          devWorkH -= timeAssigned;  //Понижаем кол-во нераспределенных часов работы устройства
+          timeAssigned = 0;          //Обнуляем кол-во распределенных часов работы устройства
+          timePassed = 0;            //Обнуляем кол-во пропущенных часов
         }
-      } else {
         
+      } else if (rates[ratesIdx].from > rates[ratesIdx].to) {
+        
+        //Проверка на 24 часа
         if (rates[ratesIdx].from + timeAssigned + timePassed < 24) {
           
-          if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow <= maxPow) {
-            
-            console.log(timeAssigned, timePassed, rates[ratesIdx]);
+          //Проверка возможности добавления устройства в текущий час расписания при наличии
+          //достаточной нераспределенной мощности и перехода через 0
+          if (!(zeroPass) && dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devPow <= maxPow) {
 
-            JsonDataOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devItemId);
-            dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devItemPow;
-            
-            rateCalc(item, rates[ratesIdx]);
-            
-            timeAssigned++;
+            //console.log(timeAssigned, timePassed, rates[ratesIdx]);
 
-          } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow > maxPow) {
-            timePassed++;
+            JsonDummyOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devId);  //Добавляем устройство в расписание на текущий час
+            dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devPow;                  //Добавляем мощность устройства на текущий час в массив мощностей
+
+            rateCalc(item, rates[ratesIdx].value);  //Рассчитываем затраты
+            timeAssigned++;                         //Повышаем кол-во вписаных часов для текущего устройства
+
+          //Если в текущий час нет свободной мощности
+          } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devPow > maxPow) {
+
+            timePassed++;  //Повышаем кол-во пропущенных часов
+
+          //Если текущий час на границе двух тарифов
           } else if (rates[ratesIdx].from + timeAssigned + timePassed >= rates[ratesIdx].to) {
-            
-          if (item.duration === 24 || itemIterations > 23) {
-            
-            if (searchPlus && rates[ratesIdx + 1]) {
-              ratesIdx++;
-              console.log(rates[ratesIdx], 'perehod+');
+
+            //Проверка на необходимость грубого поиска
+            if (item.duration === 24 || searchIterations > 24) {
+
+              //Проверка на наличие следующего тарифа в массиве дневных тарифов
+              if (searchPlus && rates[ratesIdx + 1]) {
+
+                ratesIdx++;  //Повышаем индекс массива
+
+              } else {
+
+                searchPlus = false;  //Отключаем возможность повышать индекс массива
+                ratesIdx--;          //Понижаем индекс массива
+              }
+
             } else {
-              searchPlus = false;
-              ratesIdx--;
-              console.log(rates[ratesIdx], 'perehod-')
+
+              ratesIdx = searchEngine(rates, ratesIdx, true);  //Инициализируем поиск тарифа
+              searchIterations++;                              //Повышаем количество циклов поиска
+
             }
-          } else {
-            ratesIdx = searchEngineUN(rates, ratesIdx, true);
-            itemIterations++;
-          }
-          
-            devWorkH -= timeAssigned;
-            timeAssigned = 0;
-            timePassed = 0;
+
+            devWorkH -= timeAssigned;  //Понижаем кол-во нераспределенных часов работы устройства
+            timeAssigned = 0;          //Обнуляем кол-во распределенных часов работы устройства
+            timePassed = 0;            //Обнуляем кол-во пропущенных часов
           }
           
         } else {
           
+          //Проверка на переход через 0
           if (!(zeroPass)) {
-            devWorkH -= timeAssigned;
-            timeAssigned = 0;
-            timePassed = 0;
-            zeroPass = true;
+            
+            devWorkH -= timeAssigned;  //Понижаем кол-во нераспределенных часов работы устройства
+            timeAssigned = 0;          //Обнуляем кол-во распределенных часов работы устройства
+            timePassed = 0;            //Обнуляем кол-во пропущенных часов
+            zeroPass = true;           //Изменяем показатель перехода
+            
           }
           
-          console.log('perehod cherez Zero!');
+          //Отладочная информация
+          //console.log('Zdes bil Zero!', zeroPass);
+          //if (rates[ratesIdx]) {
+          //  console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[idx].from&to', rates[ratesIdx].from, rates[ratesIdx].to, 'TA+TP', timeAssigned + timePassed);       
+          //}
           
-          if (rates[ratesIdx]) {
-            console.log('TA', timeAssigned, 'DevH', devWorkH, 'TP', timePassed, 'rates[idx].from&to', rates[ratesIdx].from, rates[ratesIdx].to, 'TA+TP', timeAssigned + timePassed);       
-          }
-          
-          if (dPowArr[timeAssigned + timePassed] + devItemPow <= maxPow && timeAssigned + timePassed < rates[ratesIdx].to) {
-            
-            console.log(timeAssigned, timePassed, rates[ratesIdx]);
+          //Проверка возможности добавления устройства в текущий час расписания при наличии
+          //достаточной нераспределенной мощности и не превышении границ времени текущего тарифа
+          if (dPowArr[timeAssigned + timePassed] + devPow <= maxPow && timeAssigned + timePassed < rates[ratesIdx].to) {
 
-            JsonDataOut.schedule[timeAssigned + timePassed].push(devItemId);
-            dPowArr[timeAssigned + timePassed] += devItemPow;
-            
-            rateCalc(item, rates[ratesIdx]);
-            
-            timeAssigned++;
+            //console.log(timeAssigned, timePassed, rates[ratesIdx]);
 
-          } else if (dPowArr[timeAssigned + timePassed] + devItemPow > maxPow) {
-            timePassed++;
+            JsonDummyOut.schedule[timeAssigned + timePassed].push(devId);  //Добавляем устройство в расписание на текущий час
+            dPowArr[timeAssigned + timePassed] += devPow;                  //Добавляем мощность устройства на текущий час в массив мощностей
+
+            rateCalc(item, rates[ratesIdx].value);  //Рассчитываем затраты
+            timeAssigned++;                         //Повышаем кол-во вписаных часов для текущего устройства
+
+          //Если в текущий час нет свободной мощности
+          } else if (dPowArr[timeAssigned + timePassed] + devPow > maxPow) {
+
+            timePassed++;  //Повышаем кол-во пропущенных часов
+
+          //Если текущий час на границе двух тарифов
           } else if (timeAssigned + timePassed >= rates[ratesIdx].to) {
-          
-            if (item.duration === 24 || itemIterations > 23) {
 
+            //Проверка на необходимость грубого поиска
+            if (item.duration === 24 || searchIterations > 24) {
+
+              //Проверка на наличие следующего тарифа в массиве дневных тарифов
               if (searchPlus && rates[ratesIdx + 1]) {
-                ratesIdx++;
-                console.log(rates[ratesIdx], 'perehod+');
+
+                ratesIdx++;  //Повышаем индекс массива
+
               } else {
-                searchPlus = false;
-                ratesIdx--;
-                console.log(rates[ratesIdx], 'perehod-')
+
+                searchPlus = false;  //Отключаем возможность повышать индекс массива
+                ratesIdx--;          //Понижаем индекс массива
               }
+
             } else {
-              ratesIdx = searchEngineUN(rates, ratesIdx, true);
-              itemIterations++;
+
+              ratesIdx = searchEngine(rates, ratesIdx, true);  //Инициализируем поиск тарифа
+              searchIterations++;                              //Повышаем количество циклов поиска
+
             }
 
-            devWorkH -= timeAssigned;
-            timeAssigned = 0;
-            timePassed = 0;
+            devWorkH -= timeAssigned;  //Понижаем кол-во нераспределенных часов работы устройства
+            timeAssigned = 0;          //Обнуляем кол-во распределенных часов работы устройства
+            timePassed = 0;            //Обнуляем кол-во пропущенных часов
           }
-          
         }
-        
       }
-
     }
-
   });
   
-  console.log(JsonDataOut.schedule, dPowArr);
-  console.log(rates);
-  
-  console.log(JsonDataOut.consumedEnergy);
-  
-  for (let key in JsonDataOut.consumedEnergy.devices) {
+  //Округляем значения в consumedEnergy до 4 знаков после запятой
+  for (let key in JsonDummyOut.consumedEnergy.devices) {
     
-    let numInp = JsonDataOut.consumedEnergy.devices[key];
+    let numInp = JsonDummyOut.consumedEnergy.devices[key];
     let numOut = parseFloat(numInp.toFixed(4));
     
-    JsonDataOut.consumedEnergy.devices[key] = numOut;
+    JsonDummyOut.consumedEnergy.devices[key] = numOut;
   }
   
-  let valueInp = JsonDataOut.consumedEnergy.value;
+  let valueInp = JsonDummyOut.consumedEnergy.value;
   let valueOut = parseFloat(valueInp.toFixed(4));
   
-  JsonDataOut.consumedEnergy.value = valueOut;
+  JsonDummyOut.consumedEnergy.value = valueOut;
   
-  return JsonDataOut;
+  let JsonDataOut = JSON.stringify(JsonDummyOut);  //Преобразовываем макет выходных данных в JSON формат
+  
+  //console.log(dPowArr);
+  
+  return JsonDataOut;  //Возвращаем обработанные данные
 }
 
 window.onload = function() {
-  console.log('window loaded!');
   
-  var JsonOut = smartHouse(JsonInp);
+  let JsonInp = `{
+    "devices": [
+        {
+            "id": "F972B82BA56A70CC579945773B6866FB",
+            "name": "Посудомоечная машина",
+            "power": 950,
+            "duration": 3,
+            "mode": "night"
+        },
+        {
+            "id": "C515D887EDBBE669B2FDAC62F571E9E9",
+            "name": "Духовка",
+            "power": 2000,
+            "duration": 2,
+            "mode": "day"
+        },
+        {
+            "id": "02DDD23A85DADDD71198305330CC386D",
+            "name": "Холодильник",
+            "power": 50,
+            "duration": 24
+        },
+        {
+            "id": "1E6276CC231716FE8EE8BC908486D41E",
+            "name": "Термостат",
+            "power": 50,
+            "duration": 24
+        },
+        {
+            "id": "7D9DC84AD110500D284B33C82FE6E85E",
+            "name": "Кондиционер",
+            "power": 850,
+            "duration": 1
+        }
+    ],
+    "rates": [
+        {
+            "from": 7,
+            "to": 10,
+            "value": 6.46
+        },
+        {
+            "from": 10,
+            "to": 17,
+            "value": 5.38
+        },
+        {
+            "from": 17,
+            "to": 21,
+            "value": 6.46
+        },
+        {
+            "from": 21,
+            "to": 23,
+            "value": 5.38
+        },
+        {
+            "from": 23,
+            "to": 7,
+            "value": 1.79
+        }
+    ],
+    "maxPower": 2100
+  }`;
+
+  let JsonOut = smartHouse(JsonInp);
   
-  console.log(JsonOut);
+  let output = JSON.parse(JsonOut);
+  
+  console.log(output);
 };
