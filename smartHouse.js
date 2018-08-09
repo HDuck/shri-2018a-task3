@@ -190,7 +190,7 @@ function smartHouse(JsonDataIn) {
   }
   
   //Функция поиска
-  function searchEngine(ratesArr, currRatesIdx, undBool) {
+  function searchEngine(ratesArr, currRatesIdx, device, undBool) {
     
     let searchIdx = 0;                      //Поисковой индекс
     let currRate = ratesArr[currRatesIdx];  //Текущий тариф
@@ -200,6 +200,9 @@ function smartHouse(JsonDataIn) {
     let valTwo = null;                      //Значение второго найденного тарифа
     let rateTo = null;                      //Искомые конец/начало дня
     let iterations = 0;                     //Для защиты от зацикливания при непредвиденных ситуациях
+    let devItem = device;
+    let matchFoundRight = false;
+    let matchFoundLeft = false;
     
     //console.log('Searching engine activated!'); 
     //console.log(currRate);
@@ -269,10 +272,65 @@ function smartHouse(JsonDataIn) {
       } else {
  
         //console.log('search++', searchIdx);
-        //console.log('search++ rates.from', ratesArr[currRatesIdx + searchIdx].from);
 
         //Ищем тариф, который начинается там, где закончился текущий тариф
         if (ratesArr[searchIdx].from === currRate.to) {
+          
+          //Проверяем найденный тариф на наличие записей о текущем устройстве
+          for (let key in JsonDummyOut.schedule) {
+            
+            if (key == ratesArr[searchIdx].from) {  //Находим совпадение времени в рассписании со временем начала следующего тарифа
+              
+              if (ratesArr[searchIdx].to > ratesArr[searchIdx].from) {  //Случай без перехода через 0
+                
+                for (let i = 0; i < ratesArr[searchIdx].to - ratesArr[searchIdx].from; i++) {  //Перебираем все имена в расписании на час указанный в тарифе
+                  
+                  JsonDummyOut.schedule[parseInt(key) + i].forEach((item) => {  //Перебираем все имена в данный час тарифа
+
+                    if (item == devItem.id) {  //Проверяем имена на совпадение с именем текущего устройства
+
+                      matchFoundRight = true;  //Записываем совпадение с именем текущего устройства
+                    }
+                  });
+          
+                  if (matchFoundRight) {  //Если есть совпадение - прерываем перебор имен
+                    
+                    break;
+                  }
+                }
+                
+              } else if (ratesArr[searchIdx].to < ratesArr[searchIdx].from) {  //Случай с переходом через 0
+                
+                for (let i = 0; i < ratesArr[searchIdx].to - ratesArr[searchIdx].from + 24; i++) {  //Перебираем все имена в расписании на час указанный в тарифе
+                  
+                  if (parseInt(key) + i < 24) {  //Случай до перехода через 0
+                    
+                    JsonDummyOut.schedule[parseInt(key) + i].forEach((item) => {  //Перебираем все имена в данный час тарифа
+                    
+                      if (item == devItem.id) {  //Проверяем имена на совпадение с именем текущего устройства
+
+                        matchFoundRight = true;  //Записываем совпадение с именем текущего устройства
+                      }
+                    });
+                    
+                  } else if (parseInt(key) + i  >= 24) {  //Случай после перехода через 0
+                    
+                    JsonDummyOut.schedule[parseInt(key) + i - 24].forEach((item) => {  //Перебираем все имена в данный час тарифа
+                    
+                      if (item == devItem.id) {  //Проверяем имена на совпадение с именем текущего устройства
+
+                        matchFoundRight = true;  //Записываем совпадение с именем текущего устройства
+                      }
+                    });
+                  }
+                 
+                  if (matchFoundRight) {  //Если есть совпадение - прерываем перебор имен
+                    break;
+                  }
+                }
+              }
+            }
+          }
           
           //Запоминаем индекс и значение мощности, найденного тарифа
           idxOne = searchIdx;
@@ -294,40 +352,111 @@ function smartHouse(JsonDataIn) {
             }
 
             //console.log('search++ deep', searchIdx);
-            //console.log('search++ deep rates.to', ratesArr[currRatesIdx + searchIdx].to);
 
             //Ищем тариф, который заканчивается там, где начался текущий тариф
             if (ratesArr[searchIdx].to === currRate.from) {
 
+              //Проверяем найденный тариф на наличие записей о текущем устройстве
+              for (let key in JsonDummyOut.schedule) {
+            
+                if (key == ratesArr[searchIdx].to) {  //Находим совпадение времени в рассписании со временем конца следующего тарифа
+
+                  if (ratesArr[searchIdx].to > ratesArr[searchIdx].from) {  //Случай без перехода через 0
+
+                    for (let i = 0; i < ratesArr[searchIdx].to - ratesArr[searchIdx].from; i++) {  //Перебираем все имена в расписании на час указанный в тарифе
+                      
+                        JsonDummyOut.schedule[parseInt(key) - i].forEach((item) => {  //Перебираем все имена в данный час тарифа
+
+                          if (item == devItem.id) {  //Проверяем имена на совпадение с именем текущего устройства
+
+                            matchFoundLeft = true;  //Записываем совпадение с именем текущего устройства
+                          }
+                        });
+                      
+                      if (matchFoundLeft) {  //Если есть совпадение - прерываем перебор имен
+                        break;
+                      }
+                    }
+
+                  } else if (ratesArr[searchIdx].to < ratesArr[searchIdx].from) {  //Случай с переходом через 0
+
+                    for (let i = 0; i < ratesArr[searchIdx].to - ratesArr[searchIdx].from + 24; i++) {  //Перебираем все имена в расписании на час указанный в тарифе
+
+                      if (parseInt(key) - i >= 0) {  //Случай до перехода через 0
+
+                        JsonDummyOut.schedule[parseInt(key) - i].forEach((item) => {  //Перебираем все имена в данный час тарифа
+
+                          if (item == devItem.id) {  //Проверяем имена на совпадение с именем текущего устройства
+
+                            matchFoundLeft = true;  //Записываем совпадение с именем текущего устройства
+                          }
+                        });
+
+                      } else if (parseInt(key) - i  < 0) {  //Случай после перехода через 0
+
+                        JsonDummyOut.schedule[parseInt(key) - i + 24].forEach((item) => {
+
+                          if (item == devItem.id) {  //Проверяем имена на совпадение с именем текущего устройства
+
+                            matchFoundLeft = true;  //Записываем совпадение с именем текущего устройства
+                          }
+                        });
+                      }
+                      
+                      if (matchFoundLeft) {  //Если есть совпадение - прерываем перебор имен
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+              
               //Запоминаем индекс и значение мощности, найденного тарифа
               idxTwo = searchIdx;
               valTwo = ratesArr[searchIdx].value;
               
               //console.log('search++ deep complete', idxTwo, valTwo);
               
+              //Обрабатываем совпадения
+              //Если нет совпадений с обеих сторон, то выбираем тариф по наименьшей мощности
+              if (!(matchFoundLeft) && !(matchFoundRight)) {
+                
+                //Сравниваем соседние тарифы и ищем более выгодный
+                if (valOne > valTwo)
+                  return idxTwo;  //Возвращаем индекс тарифа, который "левее" текущего
+
+                else if (valOne < valTwo)
+                  return idxOne;  //Возвращаем индекс тарифа, который "правее" текущего
+
+                else {
+
+                  //Добавляем псевдо-рандома, если тарифы одинаковые
+                  if (Math.random() > 0.5)
+                    return idxOne;
+
+                  else
+                    return idxTwo;
+
+                }
+                
+              } else if (matchFoundLeft && matchFoundRight) {             //Если есть совпадения с обоих сторон, то выбираем правый тариф и начинаем искать относительно его
+                
+                return searchEngine(ratesArr, idxOne, devItem, undBool);  //idxOne соответсвует тарифу идущему после текущего по времени
+                
+              } else if (matchFoundLeft) {   //При наличии совпадения слева - выбираем правый тариф
+                
+                return idxOne;               //idxOne соответсвует тарифу идущему после текущего по времени
+                
+              } else if (matchFoundRight) {  //При наличии совпадения справа - выбираем левый тариф
+                
+                return idxTwo;               //idxTwo соответсвует тарифу идущему перед текущим по времени
+              }
+              
               break;  //Прерываем текущий цикл
             }
             
             searchIdx++;  //Повышаем поисковой индекс, пока нет совпадений
-          }
-
-          //Сравниваем соседние тарифы и ищем более выгодный
-          if (valOne > valTwo)
-            return idxTwo;  //Возвращаем индекс тарифа, который "левее" текущего
-          
-          else if (valOne < valTwo)
-            return idxOne;  //Возвращаем индекс тарифа, который "правее" текущего
-          
-          else {
-            
-            //Добавляем псевдо-рандома, если тарифы одинаковые
-            if (Math.random() > 0.5)
-              return idxOne;
-            
-            else
-              return idxTwo;
-           
-          }
+          }         
         }
         
         searchIdx++;  //Повышаем поисковой индекс, пока нет совпадений
@@ -457,7 +586,7 @@ function smartHouse(JsonDataIn) {
           
         } else {
           
-          ratesIdx = searchEngine(rates, ratesIdx);  //Инициализируем поиск тарифа
+          ratesIdx = searchEngine(rates, ratesIdx, item);  //Инициализируем поиск тарифа
           searchIterations++;                        //Повышаем количество циклов поиска
           
         }
@@ -576,7 +705,7 @@ function smartHouse(JsonDataIn) {
 
           } else {
 
-            ratesIdx = searchEngine(rates, ratesIdx);  //Инициализируем поиск тарифа
+            ratesIdx = searchEngine(rates, ratesIdx, item);  //Инициализируем поиск тарифа
             searchIterations++;                        //Повышаем количество циклов поиска
 
           }
@@ -627,7 +756,7 @@ function smartHouse(JsonDataIn) {
 
             } else {
 
-              ratesIdx = searchEngine(rates, ratesIdx);  //Инициализируем поиск тарифа
+              ratesIdx = searchEngine(rates, ratesIdx, item);  //Инициализируем поиск тарифа
               searchIterations++;                        //Повышаем количество циклов поиска
 
             }
@@ -691,7 +820,7 @@ function smartHouse(JsonDataIn) {
 
             } else {
 
-              ratesIdx = searchEngine(rates, ratesIdx);  //Инициализируем поиск тарифа
+              ratesIdx = searchEngine(rates, ratesIdx, item);  //Инициализируем поиск тарифа
               searchIterations++;                        //Повышаем количество циклов поиска
 
             }
@@ -812,8 +941,8 @@ function smartHouse(JsonDataIn) {
 
           } else {
 
-            ratesIdx = searchEngine(rates, ratesIdx, true);  //Инициализируем поиск тарифа
-            searchIterations++;                              //Повышаем количество циклов поиска
+            ratesIdx = searchEngine(rates, ratesIdx, item, true);  //Инициализируем поиск тарифа
+            searchIterations++;                                    //Повышаем количество циклов поиска
 
           }
 
@@ -863,8 +992,8 @@ function smartHouse(JsonDataIn) {
 
             } else {
 
-              ratesIdx = searchEngine(rates, ratesIdx, true);  //Инициализируем поиск тарифа
-              searchIterations++;                              //Повышаем количество циклов поиска
+              ratesIdx = searchEngine(rates, ratesIdx, item, true);  //Инициализируем поиск тарифа
+              searchIterations++;                                    //Повышаем количество циклов поиска
 
             }
 
@@ -927,8 +1056,8 @@ function smartHouse(JsonDataIn) {
 
             } else {
 
-              ratesIdx = searchEngine(rates, ratesIdx, true);  //Инициализируем поиск тарифа
-              searchIterations++;                              //Повышаем количество циклов поиска
+              ratesIdx = searchEngine(rates, ratesIdx, item, true);  //Инициализируем поиск тарифа
+              searchIterations++;                                    //Повышаем количество циклов поиска
 
             }
 
@@ -965,69 +1094,69 @@ function smartHouse(JsonDataIn) {
 window.onload = function() {
   
   let JsonInp = `{
-    "devices": [
-        {
-            "id": "F972B82BA56A70CC579945773B6866FB",
-            "name": "Посудомоечная машина",
-            "power": 950,
-            "duration": 3,
-            "mode": "night"
-        },
-        {
-            "id": "C515D887EDBBE669B2FDAC62F571E9E9",
-            "name": "Духовка",
-            "power": 2000,
-            "duration": 2,
-            "mode": "day"
-        },
-        {
-            "id": "02DDD23A85DADDD71198305330CC386D",
-            "name": "Холодильник",
-            "power": 50,
-            "duration": 24
-        },
-        {
-            "id": "1E6276CC231716FE8EE8BC908486D41E",
-            "name": "Термостат",
-            "power": 50,
-            "duration": 24
-        },
-        {
-            "id": "7D9DC84AD110500D284B33C82FE6E85E",
-            "name": "Кондиционер",
-            "power": 850,
-            "duration": 1
-        }
-    ],
-    "rates": [
-        {
-            "from": 7,
-            "to": 10,
-            "value": 6.46
-        },
-        {
-            "from": 10,
-            "to": 17,
-            "value": 5.38
-        },
-        {
-            "from": 17,
-            "to": 21,
-            "value": 6.46
-        },
-        {
-            "from": 21,
-            "to": 23,
-            "value": 5.38
-        },
-        {
-            "from": 23,
-            "to": 7,
-            "value": 1.79
-        }
-    ],
-    "maxPower": 2100
-  }`;
+  "devices": [
+      {
+          "id": "F972B82BA56A70CC579945773B6866FB",
+          "name": "Посудомоечная машина",
+          "power": 950,
+          "duration": 3,
+          "mode": "night"
+      },
+      {
+          "id": "C515D887EDBBE669B2FDAC62F571E9E9",
+          "name": "Духовка",
+          "power": 2000,
+          "duration": 2,
+          "mode": "day"
+      },
+      {
+          "id": "02DDD23A85DADDD71198305330CC386D",
+          "name": "Холодильник",
+          "power": 50,
+          "duration": 24
+      },
+      {
+          "id": "1E6276CC231716FE8EE8BC908486D41E",
+          "name": "Термостат",
+          "power": 50,
+          "duration": 24
+      },
+      {
+          "id": "7D9DC84AD110500D284B33C82FE6E85E",
+          "name": "Кондиционер",
+          "power": 850,
+          "duration": 1
+      }
+  ],
+  "rates": [
+      {
+          "from": 7,
+          "to": 10,
+          "value": 6.46
+      },
+      {
+          "from": 10,
+          "to": 17,
+          "value": 5.38
+      },
+      {
+          "from": 17,
+          "to": 21,
+          "value": 6.46
+      },
+      {
+          "from": 21,
+          "to": 23,
+          "value": 5.38
+      },
+      {
+          "from": 23,
+          "to": 7,
+          "value": 1.79
+      }
+  ],
+  "maxPower": 2100
+}`;
 
   let JsonOut = smartHouse(JsonInp);
   
