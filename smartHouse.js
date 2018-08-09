@@ -380,8 +380,36 @@ function smartHouse(JsonDataIn) {
     return false;
   }
   
+  function rateCalc(devItem, rate) {
+    
+    let devId = devItem.id;
+    let devPow = devItem.power;
+    let rateVal = rate.value;
+    let result = 0;
+    console.log(devId);
+    console.log(rate);
+    console.log(Object.keys(JsonDataOut.consumedEnergy.devices));
+    
+    for (let key in JsonDataOut.consumedEnergy.devices) {
+      if (key === devId) {
+        result = 1;
+      }
+    }
+    
+    if (result === 0) {
+      JsonDataOut.consumedEnergy.devices[devId] = 0;
+    }
+    
+    let energyUsed = (devPow / 1000) * rateVal;
+    
+    JsonDataOut.consumedEnergy.devices[devId] += energyUsed;
+    JsonDataOut.consumedEnergy.value += energyUsed;
+    
+  }
+  
   //Раскидываем дневные приборы
   devDArr.forEach((item, idx) => {
+    let devId = item.id;
     let devWorkH = item.duration;
     let devItemPow = item.power;
     let devItemId = item.id;
@@ -435,6 +463,9 @@ function smartHouse(JsonDataIn) {
 
         JsonDataOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devItemId);
         dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devItemPow;
+        
+        rateCalc(item, rates[ratesIdx]);
+        
         timeAssigned++;
 
       } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow > maxPow) {
@@ -511,6 +542,9 @@ function smartHouse(JsonDataIn) {
 
           JsonDataOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devItemId);
           dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devItemPow;
+          
+          rateCalc(item, rates[ratesIdx]);
+          
           timeAssigned++;
 
         } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow > maxPow) {
@@ -545,6 +579,9 @@ function smartHouse(JsonDataIn) {
 
             JsonDataOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devItemId);
             dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devItemPow;
+            
+            rateCalc(item, rates[ratesIdx]);
+            
             timeAssigned++;
 
           } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow > maxPow) {
@@ -591,6 +628,9 @@ function smartHouse(JsonDataIn) {
 
             JsonDataOut.schedule[timeAssigned + timePassed].push(devItemId);
             dPowArr[timeAssigned + timePassed] += devItemPow;
+            
+            rateCalc(item, rates[ratesIdx]);
+            
             timeAssigned++;
 
           } else if (dPowArr[timeAssigned + timePassed] + devItemPow > maxPow) {
@@ -686,6 +726,9 @@ function smartHouse(JsonDataIn) {
 
           JsonDataOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devItemId);
           dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devItemPow;
+          
+          rateCalc(item, rates[ratesIdx]);
+          
           timeAssigned++;
 
         } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow > maxPow) {
@@ -721,6 +764,9 @@ function smartHouse(JsonDataIn) {
 
             JsonDataOut.schedule[rates[ratesIdx].from + timeAssigned + timePassed].push(devItemId);
             dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] += devItemPow;
+            
+            rateCalc(item, rates[ratesIdx]);
+            
             timeAssigned++;
 
           } else if (dPowArr[rates[ratesIdx].from + timeAssigned + timePassed] + devItemPow > maxPow) {
@@ -768,6 +814,9 @@ function smartHouse(JsonDataIn) {
 
             JsonDataOut.schedule[timeAssigned + timePassed].push(devItemId);
             dPowArr[timeAssigned + timePassed] += devItemPow;
+            
+            rateCalc(item, rates[ratesIdx]);
+            
             timeAssigned++;
 
           } else if (dPowArr[timeAssigned + timePassed] + devItemPow > maxPow) {
@@ -804,6 +853,22 @@ function smartHouse(JsonDataIn) {
   
   console.log(JsonDataOut.schedule, dPowArr);
   console.log(rates);
+  
+  console.log(JsonDataOut.consumedEnergy);
+  
+  for (let key in JsonDataOut.consumedEnergy.devices) {
+    
+    let numInp = JsonDataOut.consumedEnergy.devices[key];
+    let numOut = parseFloat(numInp.toFixed(4));
+    
+    JsonDataOut.consumedEnergy.devices[key] = numOut;
+  }
+  
+  let valueInp = JsonDataOut.consumedEnergy.value;
+  let valueOut = parseFloat(valueInp.toFixed(4));
+  
+  JsonDataOut.consumedEnergy.value = valueOut;
+  
   return JsonDataOut;
 }
 
