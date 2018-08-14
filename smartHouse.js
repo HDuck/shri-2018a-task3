@@ -200,9 +200,9 @@ function smartHouse(JsonDataIn) {
     let valTwo = null;                      //Значение второго найденного тарифа
     let rateTo = null;                      //Искомые конец/начало дня
     let iterations = 0;                     //Для защиты от зацикливания при непредвиденных ситуациях
-    let devItem = device;
-    let matchFoundRight = false;
-    let matchFoundLeft = false;
+    let devItem = device;                   //Текущее устройство
+    let matchFoundRight = false;            //Совпадение текущего имени устройства с именем устройства следующего тарифа по времени
+    let matchFoundLeft = false;             //Совпадение текущего имени устройства с именем устройства предыдущего тарифа по времени
     
     //console.log('Searching engine activated!'); 
     //console.log(currRate);
