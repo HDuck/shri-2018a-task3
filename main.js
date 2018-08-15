@@ -1,5 +1,5 @@
 window.onload = function() {
-  
+
   let inp = `{
     "devices": [
         {
@@ -64,11 +64,11 @@ window.onload = function() {
     ],
     "maxPower": 2100
   }`;
-  
+
   let out = smartHouse(inp);
-  
+
   let outObj = JSON.parse(out);
-  
+
   console.log(outObj);
-  
+
 }
